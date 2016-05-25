@@ -32,6 +32,11 @@ WaveSurfer.util = {
         return max;
     },
 
+    // via p5.js
+    map: function(n, start1, stop1, start2, stop2) {
+      return ((n-start1)/(stop1-start1))*(stop2-start2)+start2;
+    },
+
     getId: function () {
         return 'wavesurfer_' + Math.random().toString(32).substring(2);
     },

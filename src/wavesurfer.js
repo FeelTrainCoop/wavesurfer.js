@@ -263,7 +263,9 @@ var WaveSurfer = {
         }
 
         var peaks = this.backend.getPeaks(width);
-        this.drawer.drawPeaks(peaks, width);
+        var duration = this.backend.getDuration();
+
+        this.drawer.drawPeaks(peaks, width, duration);
         this.fireEvent('redraw', peaks, width);
     },
 
