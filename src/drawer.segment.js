@@ -6,12 +6,36 @@ WaveSurfer.Drawer.Segment = Object.create(WaveSurfer.Drawer);
 var totalDuration = 0;
 
 // duration of segment in seconds
-var segmentDuration = 100;
+var segmentDuration = 30;
 
 // start of segment in seconds
-var segmentStart = 5;
+var segmentStart = 0;
 
 WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
+    createWrapper: function () {
+        this.wrapper = this.container.appendChild(
+            document.createElement('wave')
+        );
+
+        this.style(this.wrapper, {
+            display: 'block',
+            position: 'relative',
+            userSelect: 'none',
+            webkitUserSelect: 'none',
+            height: this.params.height + 'px'
+        });
+
+        if (this.params.fillParent || this.params.scrollParent) {
+            this.style(this.wrapper, {
+                width: '100%',
+                overflowX: 'hidden',
+                overflowY: 'hidden'
+            });
+        }
+
+        this.setupWrapperEvents();
+    },
+
     createElements: function() {
         var waveCanvas = this.wrapper.appendChild(
             this.style(document.createElement('canvas'), {
@@ -47,23 +71,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             );
             this.progressCc = progressCanvas.getContext('2d');
         }
-
-        // hack to override event listeners
-        // var self = this;
-        // window.setTimeout(function() {
-        //     self.unAll();
-
-        //     self.on('scroll', function (e) {
-        //         e.preventDefault();
-        //         // e.stopPropagation();
-        //         window.console.log('scrolling');
-        //     });
-
-        //     self.on('click', function (e, progress) {
-        //         window.console.log('got click with progress ', progress, e);
-
-        //     });
-        // }, 2);
     },
 
     handleEvent: function (e) {
@@ -85,7 +92,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         } else {
             progress = ((e.clientX - bbox.left + this.wrapper.scrollLeft) / this.wrapper.scrollWidth) || 0;
         }
-
+        window.console.log('progress', progress);
         // relProgress is 0 to 1 mapped to the current view
         var relProgress = progress;
 
@@ -111,14 +118,24 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             }
 
             if (my.params.interact) {
-                window.console.log('making a click');
                 my.fireEvent('click', e, my.handleEvent(e));
             }
         });
 
-        this.wrapper.addEventListener('scroll', function (e) {
-            my.fireEvent('scroll', e);
-        });
+        function handleScroll(e) {
+            var delta = e.deltaX * (segmentDuration/100);
+            var tempStart = segmentStart + delta;
+
+            // constrain
+            segmentStart = Math.max(Math.min(tempStart, totalDuration-segmentDuration), 0);
+            my.fireEvent('wheel', e);
+        }
+
+        this.wrapper.addEventListener('wheel', handleScroll, false);
+        this.wrapper.addEventListener('scroll', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }, false);
     },
 
     updateSize: function () {
@@ -162,7 +179,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
     setWidth: function (width) {
         if (width == this.width) { return; }
 
-        this.width = width;
+        this.width = width / this.params.pixelRatio;
 
         // if (this.params.fillParent || this.params.scrollParent) {
         //     this.style(this.wrapper, {
@@ -217,24 +234,21 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         }
 
         // A half-pixel offset makes lines crisp
-        var $ = 0.5 / this.params.pixelRatio;
+        // var $ = 0.5 / this.params.pixelRatio;
+        var $ = 0;
         var height = this.params.height * this.params.pixelRatio;
         var offsetY = height * channelIndex || 0;
         var halfH = height / 2;
 
-        // length is 30 seconds
-        var sampleRate = ~~(peaks.length / totalDuration);
-        var length = ~~(segmentDuration * sampleRate);
-        var offset = 0;
-        this.sampleRate = sampleRate;
+        var peaksPerSecond = peaks.length / totalDuration;
+        var peaksInWindow = Math.ceil(segmentDuration * peaksPerSecond);
+        var firstPeak = ~~(segmentStart * peaksPerSecond);
 
         // scale
-        var scale = 1;
-        if (this.params.fillParent && this.width != length) {
-            scale = this.width / length;
-        }
+        var scale = this.width / peaksInWindow;
+        window.console.log('pixel ratio', this.params.pixelRatio, 'scale', scale, 'peaks', peaksInWindow, 'width', this.width);
 
-        // noramlize
+        // normalize
         var absmax = 1;
         if (this.params.normalize) {
             var max = Math.max.apply(Math, peaks);
@@ -256,17 +270,21 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             cc.moveTo($, halfH + offsetY);
 
             // draw segment top
-            for (var i = 0; i < length; i++) {
-                var h = Math.round(peaks[2 * i] / absmax * halfH);
+            var lastI = 0;
+            for (var i = 0; i < peaksInWindow; i++) {
+                var h = Math.abs(Math.round(peaks[firstPeak + i] / absmax * halfH));
                 cc.lineTo(i * scale + $, halfH - h + offsetY);
+                lastI = i;
             }
+            window.console.log('lastPeakNum', lastI + firstPeak, 'width', this.width, 'firstPeak', firstPeak, 'peaksInWindow', peaksInWindow);
+            cc.lineTo(this.width, halfH);
 
             // Draw the bottom edge going backwards, to make a single
             // closed hull to fill.
-            for (var i = length - 1; i >= 0; i--) {
-                var h = Math.round(peaks[2 * i + 1] / absmax * halfH);
-                cc.lineTo(i * scale + $, halfH - h + offsetY);
-            }
+            // for (var i = peaksInWindow - 1; i >= 0; i--) {
+            //     var h = Math.round(peaks[firstPeak + i + 1] / absmax * halfH);
+            //     cc.lineTo(i * scale + $, halfH - h + offsetY);
+            // }
 
             cc.closePath();
             cc.fill();
@@ -301,7 +319,8 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         }
     },
 
-    updateProgress: function (relativeProgress) {
+    updateProgress: function (_relativeProgress) {
+        var relativeProgress = Math.max(0, Math.min(_relativeProgress, 1));
         var pos = Math.round(
             this.width * relativeProgress
         ) / this.params.pixelRatio;

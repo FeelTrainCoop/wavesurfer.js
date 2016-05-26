@@ -90,8 +90,15 @@ var WaveSurfer = {
             my.drawer.progress(my.backend.getPlayedPercents());
         });
 
+        this.drawer.on('wheel', function () {
+            my.drawer.clearWave();
+            my.drawBuffer();
+            my.drawer.progress(my.backend.getPlayedPercents());
+        });
+
         // Click-to-seek
         this.drawer.on('click', function (e, progress) {
+            window.console.log(progress);
             setTimeout(function () {
                 my.seekTo(progress);
             }, 0);
