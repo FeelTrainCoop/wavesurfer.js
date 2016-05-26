@@ -234,8 +234,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         }
 
         // A half-pixel offset makes lines crisp
-        // var $ = 0.5 / this.params.pixelRatio;
-        var $ = 0;
+        var $ = 0.5 / this.params.pixelRatio;
         var height = this.params.height * this.params.pixelRatio;
         var offsetY = height * channelIndex || 0;
         var halfH = height / 2;
@@ -246,7 +245,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
         // scale
         var scale = this.width / peaksInWindow;
-        window.console.log('pixel ratio', this.params.pixelRatio, 'scale', scale, 'peaks', peaksInWindow, 'width', this.width);
 
         // normalize
         var absmax = 1;
@@ -270,21 +268,19 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             cc.moveTo($, halfH + offsetY);
 
             // draw segment top
-            var lastI = 0;
             for (var i = 0; i < peaksInWindow; i++) {
                 var h = Math.abs(Math.round(peaks[firstPeak + i] / absmax * halfH));
                 cc.lineTo(i * scale + $, halfH - h + offsetY);
-                lastI = i;
             }
-            window.console.log('lastPeakNum', lastI + firstPeak, 'width', this.width, 'firstPeak', firstPeak, 'peaksInWindow', peaksInWindow);
-            cc.lineTo(this.width, halfH);
+
+            // cc.lineTo(this.width, halfH);
 
             // Draw the bottom edge going backwards, to make a single
             // closed hull to fill.
-            // for (var i = peaksInWindow - 1; i >= 0; i--) {
-            //     var h = Math.round(peaks[firstPeak + i + 1] / absmax * halfH);
-            //     cc.lineTo(i * scale + $, halfH - h + offsetY);
-            // }
+            for (var i = peaksInWindow - 1; i >= 0; i--) {
+                var h = Math.round(peaks[firstPeak + i + 1] / absmax * halfH);
+                cc.lineTo(i * scale + $, halfH - h + offsetY);
+            }
 
             cc.closePath();
             cc.fill();
