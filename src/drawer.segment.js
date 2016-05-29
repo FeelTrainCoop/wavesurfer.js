@@ -2,16 +2,84 @@
 
 WaveSurfer.Drawer.Segment = Object.create(WaveSurfer.Drawer);
 
-// duration of original audio file in seconds
-var totalDuration = 0;
-
-// duration of segment in seconds
-var segmentDuration = 30;
-
-// start of segment in seconds
-var segmentStart = 0;
-
 WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
+    initDrawer: function (params) {
+        var my = this;
+
+        setTimeout(function() {
+            // override render function...this is a temporary hack
+            if (WaveSurfer.Regions) {
+
+                /* add wheel event listener */
+                WaveSurfer.Region.init = function (params, wavesurfer) {
+                    this.wavesurfer = wavesurfer;
+                    this.wrapper = wavesurfer.drawer.wrapper;
+
+                    this.id = params.id == null ? WaveSurfer.util.getId() : params.id;
+                    this.start = Number(params.start) || 0;
+                    this.end = params.end == null ?
+                        // small marker-like region
+                        this.start + (4 / this.wrapper.scrollWidth) * this.wavesurfer.getDuration() :
+                        Number(params.end);
+                    this.resize = params.resize === undefined ? true : Boolean(params.resize);
+                    this.drag = params.drag === undefined ? true : Boolean(params.drag);
+                    this.loop = Boolean(params.loop);
+                    this.color = params.color || 'rgba(0, 0, 0, 0.1)';
+                    this.data = params.data || {};
+                    this.attributes = params.attributes || {};
+
+                    this.maxLength = params.maxLength;
+                    this.minLength = params.minLength;
+
+                    this.bindInOut();
+                    this.render();
+                    this.wavesurfer.on('zoom', this.updateRender.bind(this));
+                    my.on('wheel', this.updateRender.bind(this));
+
+                    this.wavesurfer.fireEvent('region-created', this);
+                };
+
+                /* Update element's position, width, color. */
+                WaveSurfer.Region.updateRender = function() {
+                    var dur = this.wavesurfer.getDuration();
+                    var width = my.width;
+
+                    if (this.start < 0) {
+                      this.start = 0;
+                      this.end = this.end - this.start;
+                    }
+                    if (this.end > dur) {
+                      this.end = dur;
+                      this.start = dur - (this.end - this.start);
+                    }
+
+                    var segStart = my.params.segmentStart;
+                    var segEnd = my.params.segmentStart + my.params.segmentDuration;
+
+                    var l = WaveSurfer.util.map(this.start, segStart, segEnd, 0, width);
+                    var w = WaveSurfer.util.map(this.end - this.start, 0, my.params.segmentDuration, 0, width);
+
+                    if (this.element != null) {
+                        this.style(this.element, {
+                            left: l + 'px',
+                            width: w + 'px',
+                            backgroundColor: this.color,
+                            cursor: this.drag ? 'move' : 'default'
+                        });
+
+                        for (var attrname in this.attributes) {
+                            this.element.setAttribute('data-region-' + attrname, this.attributes[attrname]);
+                        }
+
+                        this.element.title = this.formatTime(this.start, this.end);
+                    }
+
+                };
+            }
+            window.console.log('overriding wavesurfer regions');
+        }, 1);
+    },
+
     createWrapper: function () {
         this.wrapper = this.container.appendChild(
             document.createElement('wave')
@@ -92,13 +160,13 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         } else {
             progress = ((e.clientX - bbox.left + this.wrapper.scrollLeft) / this.wrapper.scrollWidth) || 0;
         }
-        window.console.log('progress', progress);
+
         // relProgress is 0 to 1 mapped to the current view
         var relProgress = progress;
 
         // totalProgress is 0 - 1 mapped to wavesurfer's total duration
-        var start = segmentStart/totalDuration;
-        var end = (segmentStart + segmentDuration) / totalDuration;
+        var start = this.params.segmentStart/this.totalDuration;
+        var end = (this.params.segmentStart + this.params.segmentDuration) / this.totalDuration;
         var totalProgress = WaveSurfer.util.map(relProgress, 0, 1, start, end);
         return totalProgress;
     },
@@ -122,12 +190,19 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             }
         });
 
+        // redraw when window is resized
+        window.addEventListener('resize', function(e) {
+            my.fireEvent('wheel', null);
+        });
+
         function handleScroll(e) {
-            var delta = e.deltaX * (segmentDuration/100);
-            var tempStart = segmentStart + delta;
+            if (!my.params.scrollParent) {return;}
+
+            var delta = e.deltaX * (my.params.segmentDuration/100);
+            var tempStart = my.params.segmentStart + delta;
 
             // constrain
-            segmentStart = Math.max(Math.min(tempStart, totalDuration-segmentDuration), 0);
+            my.params.segmentStart = Math.max(Math.min(tempStart, my.totalDuration-my.params.segmentDuration), 0);
             my.fireEvent('wheel', e);
         }
 
@@ -163,8 +238,8 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         }
     },
 
-    drawPeaks: function (peaks, length, _totalDuration) {
-        totalDuration = _totalDuration;
+    drawPeaks: function (peaks, length, totalDuration) {
+        this.totalDuration = totalDuration;
         this.resetScroll();
 
         var bBox = this.wrapper.getBoundingClientRect();
@@ -172,44 +247,24 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
         // this.setWidth
         this.params.barWidth ?
-            this.drawBars(peaks, 0, totalDuration) :
-            this.drawWave(peaks, 0, totalDuration);
+            this.drawBars(peaks, 0) :
+            this.drawWave(peaks, 0);
     },
 
     setWidth: function (width) {
         if (width == this.width) { return; }
-
         this.width = width / this.params.pixelRatio;
-
-        // if (this.params.fillParent || this.params.scrollParent) {
-        //     this.style(this.wrapper, {
-        //         width: ''
-        //     });
-        // } else {
-        //     this.style(this.wrapper, {
-        //         width: ~~(this.width / this.params.pixelRatio) + 'px'
-        //     });
-        // }
-
         this.updateSize();
     },
 
-    drawBars: function (peaks, channelIndex, totalDuration) {
-        // Split channels
-        if (peaks[0] instanceof Array) {
-            var channels = peaks;
-            if (this.params.splitChannels) {
-                this.setHeight(channels.length * this.params.height * this.params.pixelRatio);
-                channels.forEach(this.drawWave, this);
-                return;
-            } else {
-                peaks = channels[0];
-            }
-        }
+    drawBars: function (peaks, channelIndex) {
+        window.console.warn('draw bars not yet implemented for drawer.segment');
 
+        this.drawWave(peaks, channelIndex);
     },
 
-    drawWave: function (peaks, channelIndex, totalDuration) {
+    drawWave: function (peaks, channelIndex) {
+
         // Split channels
         if (peaks[0] instanceof Array) {
             var channels = peaks;
@@ -239,9 +294,9 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         var offsetY = height * channelIndex || 0;
         var halfH = height / 2;
 
-        var peaksPerSecond = peaks.length / totalDuration;
-        var peaksInWindow = Math.ceil(segmentDuration * peaksPerSecond);
-        var firstPeak = ~~(segmentStart * peaksPerSecond);
+        var peaksPerSecond = peaks.length / this.totalDuration;
+        var peaksInWindow = Math.ceil(this.params.segmentDuration * peaksPerSecond);
+        var firstPeak = ~~(this.params.segmentStart * peaksPerSecond);
 
         // scale
         var scale = this.width / peaksInWindow;
@@ -278,7 +333,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             // Draw the bottom edge going backwards, to make a single
             // closed hull to fill.
             for (var i = peaksInWindow - 1; i >= 0; i--) {
-                var h = Math.round(peaks[firstPeak + i + 1] / absmax * halfH);
+                var h = -Math.abs( Math.round(peaks[firstPeak + i + 1] / absmax * halfH) );
                 cc.lineTo(i * scale + $, halfH - h + offsetY);
             }
 
@@ -291,12 +346,13 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         }, this);
     },
 
-    progress: function (totalProgress) {
+    progress: function (totalProgressPercent, isPaused) {
+
         // totalProgress is 0 - 1 mapped to wavesurfer's total duration
-        var totalTime = totalProgress * totalDuration;
+        var totalTime = totalProgressPercent * this.totalDuration;
 
         // relProgress is 0 to 1 mapped to the current view
-        var relProgress = WaveSurfer.util.map(totalTime, segmentStart, segmentStart + segmentDuration, 0, 1);
+        var relProgress = WaveSurfer.util.map(totalTime, this.params.segmentStart, this.params.segmentStart + this.params.segmentDuration, 0, 1);
 
         var progress = relProgress;
 
@@ -306,9 +362,8 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         if (pos < this.lastPos || pos - this.lastPos >= minPxDelta) {
             this.lastPos = pos;
 
-            if (this.params.scrollParent && this.params.autoCenter) {
-                var newPos = ~~(this.wrapper.scrollWidth * progress);
-                this.recenterOnPosition(newPos);
+            if ( (relProgress < 0 || relProgress > 1) && this.params.autoCenter && !isPaused) {
+                this.recenterOnPosition(relProgress);
             }
 
             this.updateProgress(progress);
@@ -329,17 +384,26 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         }
     },
 
-    recenter: function (percent) {
-        var position = this.wrapper.scrollWidth * percent;
-        this.recenterOnPosition(position, true);
+    recenter: function (totalProgressPercent) {
+        // totalProgressPercent is 0 to 1 mapped to wavesurfer's total duration
+        var totalTime = totalProgressPercent * this.totalDuration;
+        var relProgress = WaveSurfer.util.map(totalTime, this.params.segmentStart, this.params.segmentStart + this.params.segmentDuration, 0, 1);
+        this.recenterOnPosition(relProgress, true);
     },
 
-    recenterOnPosition: function (position, immediate) {
-        var scrollLeft = this.wrapper.scrollLeft;
-        var half = ~~(this.wrapper.clientWidth / 2);
-        var target = position - half;
-        var offset = target - scrollLeft;
-        var maxScroll = this.wrapper.scrollWidth - this.wrapper.clientWidth;
+    recenterOnPosition: function (relProgress, immediate) {
+        // if (relProgress >= 0 && relProgress <= 1) {return;}
+
+        // relProgress is relative to current view where 0 is left, 1 is right
+        // totalProgress is 0 - 1 mapped to wavesurfer's total duration
+        var start = this.params.segmentStart/this.totalDuration;
+        var end = (this.params.segmentStart + this.params.segmentDuration) / this.totalDuration;
+        var totalProgress = WaveSurfer.util.map(relProgress, 0, 1, start, end);
+
+        var half = ~~( this.params.segmentDuration / 2);
+        var target = totalProgress*this.totalDuration - half; // target start time
+        var offset = target - this.params.segmentStart;
+        var maxScroll = this.totalDuration - this.params.segmentDuration;
 
         if (maxScroll == 0) {
             // no need to continue if scrollbar is not there
@@ -351,14 +415,17 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             // we'll limit the "re-center" rate.
             var rate = 5;
             offset = Math.max(-rate, Math.min(rate, offset));
-            target = scrollLeft + offset;
+            target = this.params.segmentStart + offset;
         }
 
         // limit target to valid range (0 to maxScroll)
         target = Math.max(0, Math.min(maxScroll, target));
-        // no use attempting to scroll if we're not moving
-        if (target != scrollLeft) {
-            this.wrapper.scrollLeft = target;
+
+        if (target != this.params.segmentStart) {
+            this.params.segmentStart = target;
+
+            // trigger redraw from "wheel" event
+            this.fireEvent('wheel', null);
         }
 
     },

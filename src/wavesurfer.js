@@ -34,7 +34,9 @@ var WaveSurfer = {
         renderer      : 'Canvas',
         backend       : 'WebAudio',
         mediaType     : 'audio',
-        autoCenter    : true
+        autoCenter    : true,
+        segmentDuration: 30,
+        segmentStart: 0
     },
 
     init: function (params) {
@@ -90,10 +92,12 @@ var WaveSurfer = {
             my.drawer.progress(my.backend.getPlayedPercents());
         });
 
+        // this event is only fired by drawer.segment
         this.drawer.on('wheel', function () {
             my.drawer.clearWave();
             my.drawBuffer();
-            my.drawer.progress(my.backend.getPlayedPercents());
+            // update progress position
+            my.drawer.progress(my.backend.getPlayedPercents(), my.backend.isPaused() );
         });
 
         // Click-to-seek
@@ -501,7 +505,25 @@ var WaveSurfer = {
         this.unAll();
         this.backend.destroy();
         this.drawer.destroy();
-    }
+    },
+
+    // for drawer.segment only: ---------------------->
+    getSegmentStart: function () {
+        return this.params.segmentStart;
+    },
+
+    setSegmentStart: function (seconds) {
+        this.params.segmentStart = seconds;
+    },
+
+    getSegmentDuration: function () {
+        return this.params.segmentDuration;
+    },
+
+    setSegmentDuration: function (seconds) {
+        this.params.segmentDuration = seconds;
+    } // end drawer.segment getters/setters <------------
+
 };
 
 WaveSurfer.create = function (params) {
