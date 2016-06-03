@@ -270,7 +270,7 @@ var WaveSurfer = {
     },
 
     drawBuffer: function () {
-      window.console.log(this.getDuration(), this.params.minPxPerSec, this.params.pixelRatio);
+      window.console.log(this.backend, this.getDuration(), this.params.minPxPerSec, this.params.pixelRatio);
 
         var nominalWidth = Math.round(
             this.getDuration() * this.params.minPxPerSec * this.params.pixelRatio
