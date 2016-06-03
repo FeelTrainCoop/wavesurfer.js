@@ -2312,6 +2312,12 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
     handleEvent: function (e) {
         e.preventDefault();
 
+        // if this is a touch event...
+        if (e.touches) {
+          // Extract the X value from the first touch
+          e.clientX = e.changedTouches[0].clientX;
+        }
+
         var bbox = this.wrapper.getBoundingClientRect();
 
         var nominalWidth = this.width;
