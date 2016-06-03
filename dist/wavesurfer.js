@@ -2349,6 +2349,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
     setupWrapperEvents: function () {
         var my = this;
+        my.params.prevX = null;
 
         this.wrapper.addEventListener('click', function (e) {
             var scrollbarHeight = my.wrapper.offsetHeight - my.wrapper.clientHeight;
@@ -2374,20 +2375,37 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         function handleScroll(e) {
             if (!my.params.scrollParent) {return;}
 
+            var skipScroll = false;
+
             // it's a touch event
             if (event.touches) {
               var numTouches = event.touches.length;
               window.console.log(numTouches);
+
+              // if we have the X value from the previous touchmove frame...
+              if (my.params.prevX !== null) {
+                // calculate the delta using that and the current X
+                e.deltaX = e.touches[0].clientX - my.params.prevX;
+              }
+              // but if there is no previous X value, then we skip this scroll.
+              else {
+                skipScroll = true;
+              }
+
+              // set the new "previous" X to the current X, for next frame
+              my.params.prevX = e.touches[0].clientX;
             }
 
             window.console.log(e);
 
-            var delta = e.deltaX * (my.params.segmentDuration/100);
-            var tempStart = my.params.segmentStart + delta;
+            if (!skipScroll) {
+              var delta = e.deltaX * (my.params.segmentDuration/100);
+              var tempStart = my.params.segmentStart + delta;
 
-            // constrain
-            my.params.segmentStart = Math.max(Math.min(tempStart, my.totalDuration-my.params.segmentDuration), 0);
-            my.fireEvent('wheel', e);
+              // constrain
+              my.params.segmentStart = Math.max(Math.min(tempStart, my.totalDuration-my.params.segmentDuration), 0);
+              my.fireEvent('wheel', e);
+            }
         }
 
         this.wrapper.addEventListener('wheel', handleScroll, false);
