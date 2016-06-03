@@ -2182,7 +2182,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                             e.stopPropagation();
                             window.console.log(my.wavesurfer.drawer.handleEvent(e));
                             startTime = my.wavesurfer.drawer.handleEvent(e) * duration;
-                            window.console.log(startTime);
 
                             if (e.target.tagName.toLowerCase() == 'handle') {
                                 if (e.target.classList.contains('wavesurfer-handle-start')) {
@@ -2314,8 +2313,8 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
     handleEvent: function (e) {
         e.preventDefault();
 
-        // if this is a touch event...
-        if (e.touches) {
+        // if this is a one-touch event...
+        if (e.touches && e.touches.length === 1) {
           // Extract the X value from the first touch
           e.clientX = e.changedTouches[0].clientX;
         }
@@ -2398,8 +2397,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                 my.params.prevX = e.touches[0].clientX;
               }
             }
-
-            window.console.log(e);
 
             if (!skipScroll) {
               var delta = e.deltaX * (my.params.segmentDuration/100);
