@@ -119,6 +119,7 @@ WaveSurfer.util.extend(WaveSurfer.MediaElement, {
 
     getDuration: function () {
         var duration = this.media.duration;
+        window.console.log('getting duration', duration);
         if (duration >= Infinity) { // streaming audio
             duration = this.media.seekable.end(0);
         }
