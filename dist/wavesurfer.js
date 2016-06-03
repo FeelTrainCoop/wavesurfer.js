@@ -2409,11 +2409,13 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         }
 
         this.wrapper.addEventListener('wheel', handleScroll, false);
-        this.wrapper.addEventListener('touchmove', handleScroll, false);
+        //this.wrapper.addEventListener('touchmove', handleScroll, false);
+        /*
         this.wrapper.addEventListener('scroll', function(e) {
             e.stopPropagation();
             e.preventDefault();
         }, false);
+        */
     },
 
     updateSize: function () {
