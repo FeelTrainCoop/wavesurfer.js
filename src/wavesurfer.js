@@ -267,6 +267,9 @@ var WaveSurfer = {
         );
         var parentWidth = this.drawer.getWidth();
         var width = nominalWidth;
+        window.console.log('nominalWidth is', nominalWidth);
+        window.console.log('parentWidth is', parentWidth);
+
 
         // Fill container
         if (this.params.fillParent && (!this.params.scrollParent || nominalWidth < parentWidth)) {
