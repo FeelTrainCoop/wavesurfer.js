@@ -112,7 +112,9 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
                         var onDown = function (e) {
                             e.stopPropagation();
+                            window.console.log(my.wavesurfer.drawer.handleEvent(e));
                             startTime = my.wavesurfer.drawer.handleEvent(e) * duration;
+                            window.console.log(startTime);
 
                             if (e.target.tagName.toLowerCase() == 'handle') {
                                 if (e.target.classList.contains('wavesurfer-handle-start')) {
@@ -126,6 +128,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                         };
                         var onUp = function (e) {
                             if (drag || resize) {
+                                window.console.log(e);
                                 drag = false;
                                 resize = false;
                                 e.stopPropagation();
@@ -137,9 +140,11 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                         };
                         var onMove = function (e) {
                             if (drag || resize) {
+                                window.console.log(my.wavesurfer.drawer.handleEvent(e));
                                 var time = my.wavesurfer.drawer.handleEvent(e) * duration;
                                 var delta = time - startTime;
                                 startTime = time;
+                                window.console.log(time);
 
                                 // Drag
                                 if (my.drag && drag) {
