@@ -370,6 +370,7 @@ var WaveSurfer = {
      *                                          web audio dependency
      */
     loadMediaElement: function (urlOrElt, peaks) {
+      window.console.log('loadMediaElement');
         this.empty();
         var url, elt;
         if (typeof urlOrElt === 'string') {
@@ -388,11 +389,14 @@ var WaveSurfer = {
 
         this.tmpEvents.push(
             this.backend.once('canplay', (function () {
+
+      window.console.log('canplay was triggered');
                 this.drawBuffer();
                 this.fireEvent('ready');
             }).bind(this)),
 
             this.backend.once('error', (function (err) {
+      window.console.log('an error happened');
                 this.fireEvent('error', err);
             }).bind(this))
         );
