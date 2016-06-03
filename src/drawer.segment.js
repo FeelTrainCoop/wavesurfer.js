@@ -167,11 +167,13 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
                         my.on('remove', function () {
                             document.body.removeEventListener('mouseup', onUp);
+                            document.body.removeEventListener('touchend', onUp);
                             my.wrapper.removeEventListener('mousemove', onMove);
+                            my.wrapper.removeEventListener('touchmove', onMove);
                         });
 
                         my.wavesurfer.on('destroy', function () {
-                            document.body.removeEventListener('mouseup', onUp);
+                            document.body.removeEventListener('touchend', onUp);
                         });
                     }());
                 };
@@ -304,6 +306,14 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         function handleScroll(e) {
             if (!my.params.scrollParent) {return;}
 
+            // it's a touch event
+            if (event.touches) {
+              var numTouches = event.touches.length;
+              window.console.log(numTouches);
+            }
+
+            window.console.log(e);
+
             var delta = e.deltaX * (my.params.segmentDuration/100);
             var tempStart = my.params.segmentStart + delta;
 
@@ -313,6 +323,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         }
 
         this.wrapper.addEventListener('wheel', handleScroll, false);
+        this.wrapper.addEventListener('touchmove', handleScroll, false);
         this.wrapper.addEventListener('scroll', function(e) {
             e.stopPropagation();
             e.preventDefault();
