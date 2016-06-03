@@ -309,7 +309,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             my.fireEvent('wheel', e);
         }
 
-        //this.wrapper.addEventListener('wheel', handleScroll, false);
+        this.wrapper.addEventListener('wheel', handleScroll, false);
         this.wrapper.addEventListener('scroll', function(e) {
             e.stopPropagation();
             e.preventDefault();

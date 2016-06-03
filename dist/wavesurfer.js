@@ -281,6 +281,8 @@ var WaveSurfer = {
             width = parentWidth;
         }
 
+        window.console.log('width is', width);
+
         var peaks = this.backend.getPeaks(width);
         var duration = this.backend.getDuration();
 
@@ -2381,7 +2383,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             my.fireEvent('wheel', e);
         }
 
-        //this.wrapper.addEventListener('wheel', handleScroll, false);
+        this.wrapper.addEventListener('wheel', handleScroll, false);
         this.wrapper.addEventListener('scroll', function(e) {
             e.stopPropagation();
             e.preventDefault();
