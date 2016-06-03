@@ -78,7 +78,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
                 WaveSurfer.Region.bindEvents = function () {
                     var my = this;
-                    window.console.log('WE ARE USING THIS');
 
                     this.element.addEventListener('mouseenter', function (e) {
                         my.fireEvent('mouseenter', e);
@@ -112,7 +111,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
                         var onDown = function (e) {
                             e.stopPropagation();
-                            window.console.log(my.wavesurfer.drawer.handleEvent(e));
                             startTime = my.wavesurfer.drawer.handleEvent(e) * duration;
 
                             if (e.target.tagName.toLowerCase() == 'handle') {
@@ -127,7 +125,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                         };
                         var onUp = function (e) {
                             if (drag || resize) {
-                                window.console.log(e);
                                 drag = false;
                                 resize = false;
                                 e.stopPropagation();
@@ -139,11 +136,9 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                         };
                         var onMove = function (e) {
                             if (drag || resize) {
-                                window.console.log(my.wavesurfer.drawer.handleEvent(e));
                                 var time = my.wavesurfer.drawer.handleEvent(e) * duration;
                                 var delta = time - startTime;
                                 startTime = time;
-                                window.console.log(time);
 
                                 // Drag
                                 if (my.drag && drag) {
@@ -306,48 +301,19 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         function handleScroll(e) {
             if (!my.params.scrollParent) {return;}
 
-            var skipScroll = false;
+            var delta = e.deltaX * (my.params.segmentDuration/100);
+            var tempStart = my.params.segmentStart + delta;
 
-            // it's a touch event
-            if (event.touches) {
-              var numTouches = event.touches.length;
-              window.console.log(numTouches);
-
-              // if it's a two-finger touch
-              if (numTouches === 2) {
-                // if we have the X value from the previous touchmove frame...
-                if (my.params.prevX !== null) {
-                  // calculate the delta using that and the current X
-                  e.deltaX = e.touches[0].clientX - my.params.prevX;
-                }
-                // but if there is no previous X value, then we skip this scroll.
-                else {
-                  skipScroll = true;
-                }
-
-                // set the new "previous" X to the current X, for next frame
-                my.params.prevX = e.touches[0].clientX;
-              }
-            }
-
-            if (!skipScroll) {
-              var delta = e.deltaX * (my.params.segmentDuration/100);
-              var tempStart = my.params.segmentStart + delta;
-
-              // constrain
-              my.params.segmentStart = Math.max(Math.min(tempStart, my.totalDuration-my.params.segmentDuration), 0);
-              my.fireEvent('wheel', e);
-            }
+            // constrain
+            my.params.segmentStart = Math.max(Math.min(tempStart, my.totalDuration-my.params.segmentDuration), 0);
+            my.fireEvent('wheel', e);
         }
 
         this.wrapper.addEventListener('wheel', handleScroll, false);
-        //this.wrapper.addEventListener('touchmove', handleScroll, false);
-        /*
         this.wrapper.addEventListener('scroll', function(e) {
             e.stopPropagation();
             e.preventDefault();
         }, false);
-        */
     },
 
     updateSize: function () {
