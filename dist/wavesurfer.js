@@ -578,10 +578,6 @@ WaveSurfer.util = {
       return ((n-start1)/(stop1-start1))*(stop2-start2)+start2;
     },
 
-    lerp: function(start, stop, amt) {
-      return amt*(stop-start)+start;
-    },
-
     getId: function () {
         return 'wavesurfer_' + Math.random().toString(32).substring(2);
     },
@@ -2147,8 +2143,100 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                     }
 
                 };
+
+                WaveSurfer.Region.bindEvents = function () {
+                    var my = this;
+                    window.console.log('WE ARE USING THISSSSSSSSSSSS');
+
+                    this.element.addEventListener('mouseenter', function (e) {
+                        my.fireEvent('mouseenter', e);
+                        my.wavesurfer.fireEvent('region-mouseenter', my, e);
+                    });
+
+                    this.element.addEventListener('mouseleave', function (e) {
+                        my.fireEvent('mouseleave', e);
+                        my.wavesurfer.fireEvent('region-mouseleave', my, e);
+                    });
+
+                    this.element.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        my.fireEvent('click', e);
+                        my.wavesurfer.fireEvent('region-click', my, e);
+                    });
+
+                    this.element.addEventListener('dblclick', function (e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        my.fireEvent('dblclick', e);
+                        my.wavesurfer.fireEvent('region-dblclick', my, e);
+                    });
+
+                    /* Drag or resize on mousemove. */
+                    (this.drag || this.resize) && (function () {
+                        var duration = my.wavesurfer.getDuration();
+                        var drag;
+                        var resize;
+                        var startTime;
+
+                        var onDown = function (e) {
+                            e.stopPropagation();
+                            startTime = my.wavesurfer.drawer.handleEvent(e) * duration;
+
+                            if (e.target.tagName.toLowerCase() == 'handle') {
+                                if (e.target.classList.contains('wavesurfer-handle-start')) {
+                                    resize = 'start';
+                                } else {
+                                    resize = 'end';
+                                }
+                            } else {
+                                drag = true;
+                            }
+                        };
+                        var onUp = function (e) {
+                            if (drag || resize) {
+                                drag = false;
+                                resize = false;
+                                e.stopPropagation();
+                                e.preventDefault();
+
+                                my.fireEvent('update-end', e);
+                                my.wavesurfer.fireEvent('region-update-end', my, e);
+                            }
+                        };
+                        var onMove = function (e) {
+                            if (drag || resize) {
+                                var time = my.wavesurfer.drawer.handleEvent(e) * duration;
+                                var delta = time - startTime;
+                                startTime = time;
+
+                                // Drag
+                                if (my.drag && drag) {
+                                    my.onDrag(delta);
+                                }
+
+                                // Resize
+                                if (my.resize && resize) {
+                                    my.onResize(delta, resize);
+                                }
+                            }
+                        };
+
+                        my.element.addEventListener('mousedown', onDown);
+                        my.wrapper.addEventListener('mousemove', onMove);
+                        document.body.addEventListener('mouseup', onUp);
+
+                        my.on('remove', function () {
+                            document.body.removeEventListener('mouseup', onUp);
+                            my.wrapper.removeEventListener('mousemove', onMove);
+                        });
+
+                        my.wavesurfer.on('destroy', function () {
+                            document.body.removeEventListener('mouseup', onUp);
+                        });
+                    }());
+                };
             }
-            window.console.log('overriding wavesurfer regions');
+            window.console.log('overriding wavesurfer regions!');
         }, 1);
     },
 
@@ -2504,6 +2592,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
 
 });
+
 'use strict';
 
 /* Init from HTML */
