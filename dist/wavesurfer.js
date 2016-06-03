@@ -270,23 +270,16 @@ var WaveSurfer = {
     },
 
     drawBuffer: function () {
-      window.console.log(this.backend, this.getDuration(), this.params.minPxPerSec, this.params.pixelRatio);
-
         var nominalWidth = Math.round(
             this.getDuration() * this.params.minPxPerSec * this.params.pixelRatio
         );
         var parentWidth = this.drawer.getWidth();
         var width = nominalWidth;
-        window.console.log('nominalWidth is', nominalWidth);
-        window.console.log('parentWidth is', parentWidth);
-
 
         // Fill container
         if (this.params.fillParent && (!this.params.scrollParent || nominalWidth < parentWidth)) {
             width = parentWidth;
         }
-
-        window.console.log('width is', width);
 
         var peaks = this.backend.getPeaks(width);
         var duration = this.backend.getDuration();
@@ -377,7 +370,6 @@ var WaveSurfer = {
      *                                          web audio dependency
      */
     loadMediaElement: function (urlOrElt, peaks) {
-      window.console.log('loadMediaElement');
         this.empty();
         var url, elt;
         if (typeof urlOrElt === 'string') {
@@ -396,14 +388,11 @@ var WaveSurfer = {
 
         this.tmpEvents.push(
             this.backend.once('canplay', (function () {
-
-      window.console.log('canplay was triggered');
                 this.drawBuffer();
                 this.fireEvent('ready');
             }).bind(this)),
 
             this.backend.once('error', (function (err) {
-      window.console.log('an error happened');
                 this.fireEvent('error', err);
             }).bind(this))
         );
@@ -1244,9 +1233,7 @@ WaveSurfer.util.extend(WaveSurfer.MediaElement, {
     },
 
     getDuration: function () {
-        window.console.log('getting duration');
         var duration = this.media.duration;
-        window.console.log(duration, this.media);
         if (duration >= Infinity) { // streaming audio
             duration = this.media.seekable.end(0);
         }
@@ -2253,7 +2240,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                     }());
                 };
             }
-            window.console.log('overriding wavesurfer regions!');
+            window.console.log('overriding wavesurfer regions');
         }, 1);
     },
 
@@ -2423,7 +2410,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
     },
 
     drawPeaks: function (peaks, length, totalDuration) {
-      window.console.log('drawing peaks', arguments);
         this.totalDuration = totalDuration;
         this.resetScroll();
 

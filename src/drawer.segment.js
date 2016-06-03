@@ -172,7 +172,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                     }());
                 };
             }
-            window.console.log('overriding wavesurfer regions!');
+            window.console.log('overriding wavesurfer regions');
         }, 1);
     },
 
