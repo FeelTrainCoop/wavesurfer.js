@@ -2146,7 +2146,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
                 WaveSurfer.Region.bindEvents = function () {
                     var my = this;
-                    window.console.log('WE ARE USING THISSSSSSSSSSSS');
+                    window.console.log('WE ARE USING THIS');
 
                     this.element.addEventListener('mouseenter', function (e) {
                         my.fireEvent('mouseenter', e);
@@ -2222,8 +2222,11 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                         };
 
                         my.element.addEventListener('mousedown', onDown);
+                        my.element.addEventListener('touchstart', onDown);
                         my.wrapper.addEventListener('mousemove', onMove);
+                        my.wrapper.addEventListener('touchmove', onMove);
                         document.body.addEventListener('mouseup', onUp);
+                        document.body.addEventListener('touchend', onUp);
 
                         my.on('remove', function () {
                             document.body.removeEventListener('mouseup', onUp);
