@@ -262,23 +262,16 @@ var WaveSurfer = {
     },
 
     drawBuffer: function () {
-      window.console.log(this.backend, this.getDuration(), this.params.minPxPerSec, this.params.pixelRatio);
-
         var nominalWidth = Math.round(
             this.getDuration() * this.params.minPxPerSec * this.params.pixelRatio
         );
         var parentWidth = this.drawer.getWidth();
         var width = nominalWidth;
-        window.console.log('nominalWidth is', nominalWidth);
-        window.console.log('parentWidth is', parentWidth);
-
 
         // Fill container
         if (this.params.fillParent && (!this.params.scrollParent || nominalWidth < parentWidth)) {
             width = parentWidth;
         }
-
-        window.console.log('width is', width);
 
         var peaks = this.backend.getPeaks(width);
         var duration = this.backend.getDuration();
@@ -369,7 +362,6 @@ var WaveSurfer = {
      *                                          web audio dependency
      */
     loadMediaElement: function (urlOrElt, peaks) {
-      window.console.log('loadMediaElement');
         this.empty();
         var url, elt;
         if (typeof urlOrElt === 'string') {
@@ -388,14 +380,11 @@ var WaveSurfer = {
 
         this.tmpEvents.push(
             this.backend.once('canplay', (function () {
-
-      window.console.log('canplay was triggered');
                 this.drawBuffer();
                 this.fireEvent('ready');
             }).bind(this)),
 
             this.backend.once('error', (function (err) {
-      window.console.log('an error happened');
                 this.fireEvent('error', err);
             }).bind(this))
         );
