@@ -2382,18 +2382,21 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
               var numTouches = event.touches.length;
               window.console.log(numTouches);
 
-              // if we have the X value from the previous touchmove frame...
-              if (my.params.prevX !== null) {
-                // calculate the delta using that and the current X
-                e.deltaX = e.touches[0].clientX - my.params.prevX;
-              }
-              // but if there is no previous X value, then we skip this scroll.
-              else {
-                skipScroll = true;
-              }
+              // if it's a two-finger touch
+              if (numTouches === 2) {
+                // if we have the X value from the previous touchmove frame...
+                if (my.params.prevX !== null) {
+                  // calculate the delta using that and the current X
+                  e.deltaX = e.touches[0].clientX - my.params.prevX;
+                }
+                // but if there is no previous X value, then we skip this scroll.
+                else {
+                  skipScroll = true;
+                }
 
-              // set the new "previous" X to the current X, for next frame
-              my.params.prevX = e.touches[0].clientX;
+                // set the new "previous" X to the current X, for next frame
+                my.params.prevX = e.touches[0].clientX;
+              }
             }
 
             window.console.log(e);
