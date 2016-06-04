@@ -281,6 +281,10 @@ var WaveSurfer = {
             width = parentWidth;
         }
 
+
+        window.console.log(this.getDuration());
+        window.console.log(parentWidth);
+        window.console.log(width);
         var peaks = this.backend.getPeaks(width);
         var duration = this.backend.getDuration();
 
@@ -2410,7 +2414,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
     },
 
     drawPeaks: function (peaks, length, totalDuration) {
-      window.console.log('drawing peaks', peaks, length, totalDuration);
+      //window.console.log('drawing peaks', peaks, length, totalDuration);
         this.totalDuration = totalDuration;
         this.resetScroll();
 
