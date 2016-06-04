@@ -110,6 +110,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                         var startTime;
 
                         var onDown = function (e) {
+                          window.console.log('touchstart');
                             e.stopPropagation();
                             startTime = my.wavesurfer.drawer.handleEvent(e) * duration;
 
@@ -124,6 +125,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                             }
                         };
                         var onUp = function (e) {
+                          window.console.log('touchend');
                             if (drag || resize) {
                                 drag = false;
                                 resize = false;
@@ -135,6 +137,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                             }
                         };
                         var onMove = function (e) {
+                          window.console.log('touchmove!');
                             if (drag || resize) {
                                 var time = my.wavesurfer.drawer.handleEvent(e) * duration;
                                 var delta = time - startTime;
@@ -342,7 +345,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
     },
 
     drawPeaks: function (peaks, length, totalDuration) {
-      //window.console.log('drawing peaks', peaks, length, totalDuration);
         this.totalDuration = totalDuration;
         this.resetScroll();
 

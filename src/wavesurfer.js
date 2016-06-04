@@ -273,10 +273,6 @@ var WaveSurfer = {
             width = parentWidth;
         }
 
-
-        window.console.log(this.getDuration());
-        window.console.log(parentWidth);
-        window.console.log(width);
         var peaks = this.backend.getPeaks(width);
         var duration = this.backend.getDuration();
 
