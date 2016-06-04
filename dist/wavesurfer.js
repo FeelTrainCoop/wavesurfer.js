@@ -1234,7 +1234,6 @@ WaveSurfer.util.extend(WaveSurfer.MediaElement, {
 
     getDuration: function () {
         var duration = this.media.duration;
-        window.console.log('getting duration', duration);
         if (duration >= Infinity) { // streaming audio
             duration = this.media.seekable.end(0);
         }
@@ -2411,6 +2410,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
     },
 
     drawPeaks: function (peaks, length, totalDuration) {
+      window.console.log('drawing peaks', arguments);
         this.totalDuration = totalDuration;
         this.resetScroll();
 

@@ -342,6 +342,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
     },
 
     drawPeaks: function (peaks, length, totalDuration) {
+      window.console.log('drawing peaks', arguments);
         this.totalDuration = totalDuration;
         this.resetScroll();
 
