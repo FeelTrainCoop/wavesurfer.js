@@ -9,6 +9,20 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         setTimeout(function() {
             // override render function...this is a temporary hack
             if (WaveSurfer.Regions) {
+                /* Add a region. */
+                WaveSurfer.Region.add = function (params) {
+                  window.console.log('regions.add');
+                    var region = Object.create(WaveSurfer.Region);
+                    region.init(params, this.wavesurfer);
+
+                    this.list[region.id] = region;
+
+                    region.on('remove', (function () {
+                        delete this.list[region.id];
+                    }).bind(this));
+
+                    return region;
+                };
 
                 /* add wheel event listener */
                 WaveSurfer.Region.init = function (params, wavesurfer) {
