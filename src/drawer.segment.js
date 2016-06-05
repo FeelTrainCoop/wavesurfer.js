@@ -60,6 +60,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                     var l = WaveSurfer.util.map(this.start, segStart, segEnd, 0, width);
                     var w = WaveSurfer.util.map(this.end - this.start, 0, my.params.segmentDuration, 0, width);
                   window.console.log('!', segStart, segEnd, l, w);
+                  window.console.trace();
 
                     if (this.element != null) {
                         this.style(this.element, {
