@@ -9,6 +9,20 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
         setTimeout(function() {
             // override render function...this is a temporary hack
             if (WaveSurfer.Regions) {
+                /* Add a region. */
+                WaveSurfer.Region.add = function (params) {
+                  window.console.log('regions.add');
+                    var region = Object.create(WaveSurfer.Region);
+                    region.init(params, this.wavesurfer);
+
+                    this.list[region.id] = region;
+
+                    region.on('remove', (function () {
+                        delete this.list[region.id];
+                    }).bind(this));
+
+                    return region;
+                };
 
                 /* add wheel event listener */
                 WaveSurfer.Region.init = function (params, wavesurfer) {
@@ -43,6 +57,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                 WaveSurfer.Region.updateRender = function() {
                     var dur = this.wavesurfer.getDuration();
                     var width = my.width;
+                  window.console.log('width:', width, 'dur:', dur, this.start, this.end);
 
                     if (this.start < 0) {
                       this.start = 0;
@@ -58,6 +73,8 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
                     var l = WaveSurfer.util.map(this.start, segStart, segEnd, 0, width);
                     var w = WaveSurfer.util.map(this.end - this.start, 0, my.params.segmentDuration, 0, width);
+                  window.console.log('!', segStart, segEnd, l, w);
+                  window.console.trace();
 
                     if (this.element != null) {
                         this.style(this.element, {
@@ -74,6 +91,105 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                         this.element.title = this.formatTime(this.start, this.end);
                     }
 
+                };
+
+                WaveSurfer.Region.bindEvents = function () {
+                    var my = this;
+
+                    this.element.addEventListener('mouseenter', function (e) {
+                        my.fireEvent('mouseenter', e);
+                        my.wavesurfer.fireEvent('region-mouseenter', my, e);
+                    });
+
+                    this.element.addEventListener('mouseleave', function (e) {
+                        my.fireEvent('mouseleave', e);
+                        my.wavesurfer.fireEvent('region-mouseleave', my, e);
+                    });
+
+                    this.element.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        my.fireEvent('click', e);
+                        my.wavesurfer.fireEvent('region-click', my, e);
+                    });
+
+                    this.element.addEventListener('dblclick', function (e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        my.fireEvent('dblclick', e);
+                        my.wavesurfer.fireEvent('region-dblclick', my, e);
+                    });
+
+                    /* Drag or resize on mousemove. */
+                    (this.drag || this.resize) && (function () {
+                        var duration = my.wavesurfer.getDuration();
+                        var drag;
+                        var resize;
+                        var startTime;
+
+                        var onDown = function (e) {
+                          window.console.log('touchstart');
+                            e.stopPropagation();
+                            startTime = my.wavesurfer.drawer.handleEvent(e) * duration;
+
+                            if (e.target.tagName.toLowerCase() == 'handle') {
+                                if (e.target.classList.contains('wavesurfer-handle-start')) {
+                                    resize = 'start';
+                                } else {
+                                    resize = 'end';
+                                }
+                            } else {
+                                drag = true;
+                            }
+                        };
+                        var onUp = function (e) {
+                          window.console.log('touchend');
+                            if (drag || resize) {
+                                drag = false;
+                                resize = false;
+                                e.stopPropagation();
+                                e.preventDefault();
+
+                                my.fireEvent('update-end', e);
+                                my.wavesurfer.fireEvent('region-update-end', my, e);
+                            }
+                        };
+                        var onMove = function (e) {
+                          window.console.log('touchmove!');
+                            if (drag || resize) {
+                                var time = my.wavesurfer.drawer.handleEvent(e) * duration;
+                                var delta = time - startTime;
+                                startTime = time;
+
+                                // Drag
+                                if (my.drag && drag) {
+                                    my.onDrag(delta);
+                                }
+
+                                // Resize
+                                if (my.resize && resize) {
+                                    my.onResize(delta, resize);
+                                }
+                            }
+                        };
+
+                        my.element.addEventListener('mousedown', onDown);
+                        my.element.addEventListener('touchstart', onDown);
+                        my.wrapper.addEventListener('mousemove', onMove);
+                        my.wrapper.addEventListener('touchmove', onMove);
+                        document.body.addEventListener('mouseup', onUp);
+                        document.body.addEventListener('touchend', onUp);
+
+                        my.on('remove', function () {
+                            document.body.removeEventListener('mouseup', onUp);
+                            document.body.removeEventListener('touchend', onUp);
+                            my.wrapper.removeEventListener('mousemove', onMove);
+                            my.wrapper.removeEventListener('touchmove', onMove);
+                        });
+
+                        my.wavesurfer.on('destroy', function () {
+                            document.body.removeEventListener('touchend', onUp);
+                        });
+                    }());
                 };
             }
             window.console.log('overriding wavesurfer regions');
@@ -144,6 +260,12 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
     handleEvent: function (e) {
         e.preventDefault();
 
+        // if this is a one-touch event...
+        if (e.touches && e.touches.length === 1) {
+          // Extract the X value from the first touch
+          e.clientX = e.changedTouches[0].clientX;
+        }
+
         var bbox = this.wrapper.getBoundingClientRect();
 
         var nominalWidth = this.width;
@@ -173,6 +295,7 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
     setupWrapperEvents: function () {
         var my = this;
+        my.params.prevX = null;
 
         this.wrapper.addEventListener('click', function (e) {
             var scrollbarHeight = my.wrapper.offsetHeight - my.wrapper.clientHeight;

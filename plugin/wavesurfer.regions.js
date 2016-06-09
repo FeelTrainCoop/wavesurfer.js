@@ -5,6 +5,7 @@ WaveSurfer.Regions = {
     init: function (wavesurfer) {
         this.wavesurfer = wavesurfer;
         this.wrapper = this.wavesurfer.drawer.wrapper;
+      window.console.log('regions.init');
 
         /* Id-based hash of regions. */
         this.list = {};
@@ -12,6 +13,7 @@ WaveSurfer.Regions = {
 
     /* Add a region. */
     add: function (params) {
+      window.console.log('regions.add');
         var region = Object.create(WaveSurfer.Region);
         region.init(params, this.wavesurfer);
 
@@ -450,6 +452,8 @@ WaveSurfer.util.extend(WaveSurfer.Region, WaveSurfer.Observer);
 
 /* Augment WaveSurfer with region methods. */
 WaveSurfer.initRegions = function () {
+      window.console.log('initRegions');
+
     if (!this.regions) {
         this.regions = Object.create(WaveSurfer.Regions);
         this.regions.init(this);
@@ -458,6 +462,7 @@ WaveSurfer.initRegions = function () {
 
 WaveSurfer.addRegion = function (options) {
     this.initRegions();
+      window.console.log('addRegion');
     return this.regions.add(options);
 };
 
