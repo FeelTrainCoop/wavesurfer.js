@@ -11,7 +11,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
             if (WaveSurfer.Regions) {
                 /* Add a region. */
                 WaveSurfer.Region.add = function (params) {
-                  window.console.log('regions.add');
                     var region = Object.create(WaveSurfer.Region);
                     region.init(params, this.wavesurfer);
 
@@ -57,7 +56,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                 WaveSurfer.Region.updateRender = function() {
                     var dur = this.wavesurfer.getDuration();
                     var width = my.width;
-                  window.console.log('width:', width, 'dur:', dur, this.start, this.end);
 
                     if (this.start < 0) {
                       this.start = 0;
@@ -73,8 +71,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
 
                     var l = WaveSurfer.util.map(this.start, segStart, segEnd, 0, width);
                     var w = WaveSurfer.util.map(this.end - this.start, 0, my.params.segmentDuration, 0, width);
-                  window.console.log('!', segStart, segEnd, l, w);
-                  window.console.trace();
 
                     if (this.element != null) {
                         this.style(this.element, {
@@ -127,7 +123,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                         var startTime;
 
                         var onDown = function (e) {
-                          window.console.log('touchstart');
                             e.stopPropagation();
                             startTime = my.wavesurfer.drawer.handleEvent(e) * duration;
 
@@ -142,7 +137,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                             }
                         };
                         var onUp = function (e) {
-                          window.console.log('touchend');
                             if (drag || resize) {
                                 drag = false;
                                 resize = false;
@@ -154,7 +148,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                             }
                         };
                         var onMove = function (e) {
-                          window.console.log('touchmove!');
                             if (drag || resize) {
                                 var time = my.wavesurfer.drawer.handleEvent(e) * duration;
                                 var delta = time - startTime;
@@ -192,7 +185,6 @@ WaveSurfer.util.extend(WaveSurfer.Drawer.Segment, {
                     }());
                 };
             }
-            window.console.log('overriding wavesurfer regions');
         }, 1);
     },
 
